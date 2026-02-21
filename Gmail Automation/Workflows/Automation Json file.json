@@ -1,0 +1,905 @@
+{
+  "name": "Gmail Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dd2e8aa9-0416-467b-a9d6-c11a8bdb6e07",
+              "leftValue": "={{ $json.label_exists }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        6720
+      ],
+      "id": "96a15eaa-3449-48c0-bd7d-3b5538ec7f81",
+      "name": "P1 Exists?2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dd2e8aa9-0416-467b-a9d6-c11a8bdb6e07",
+              "leftValue": "={{ $json.label_exists }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        720,
+        7200
+      ],
+      "id": "8ed2323a-afa7-455d-b5d8-52b6b69840e4",
+      "name": "P2 Exists?2"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        928,
+        6496
+      ],
+      "id": "6340a165-5dee-403a-91af-e262eb28002e",
+      "name": "Groq Chat Model2"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        6240
+      ],
+      "id": "2ea3fcea-dea0-4818-bcf7-c12883fa746b",
+      "name": "New Email Listener",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// === First Code node after Gmail Trigger ===\n\n// Get the email data from input\nconst email = $input.first().json;\n\n// Extract message ID (Gmail trigger usually puts it in \"id\")\nconst messageId = email.id;\n\n// threadId is usually already there\nconst threadId = email.threadId;\n\n// Assume 'text' is body or snippet — adjust if you have different field\nconst text = (email.snippet || email.body || \"\").toLowerCase();\n\n// Your category logic (keep or expand)\nlet category = \"Other\";  // default\n\nif (text.includes(\"job\") || text.includes(\"discussion\") || text.includes(\"production\") || \n    text.includes(\"standup\") || text.includes(\"meeting\") || text.includes(\"call\")) {\n  category = \"Work & Professional\";\n} else if (text.includes(\"bank\") || text.includes(\"account\") || text.includes(\"transaction\") || \n           text.includes(\"credit\") || text.includes(\"debit\") || text.includes(\"payment\")) {\n  category = \"Payments & Banking\";\n} else if (text.includes(\"bill\") || text.includes(\"invoice\") || text.includes(\"subscription\")) {\n  category = \"Bills & Subscriptions\";\n} else if (text.includes(\"shopping\") || text.includes(\"order\") || text.includes(\"delivery\")) {\n  category = \"Shopping & Orders\";\n}\n// ... add more conditions as needed\n\n// Always return structured output\nreturn [{\n  json: {\n    messageId: messageId,\n    threadId: threadId,\n    category: category,\n    // optional: keep other useful fields\n    snippet: email.snippet || \"\",\n    subject: email.headers?.subject || \"\",\n    from: email.headers?.from || \"\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        6240
+      ],
+      "id": "fc30c3ca-4a16-4c51-9df7-495cdb97f71a",
+      "name": "Extract Email Data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9af2ad3a-2bba-4f1d-9070-f84e04aa2a85",
+              "name": "id",
+              "value": "={{ $json.messageId }}",
+              "type": "string"
+            },
+            {
+              "id": "ce91a8eb-ee17-44e5-b1af-7786a64d169d",
+              "name": "threadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "a721ec80-f47b-4468-a1c8-e89f7f76719f",
+              "name": "from",
+              "value": "={{ $json.from }}",
+              "type": "string"
+            },
+            {
+              "id": "cb80f63b-2a9b-4e55-bd5a-56d17cb0db7c",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "aea15da7-cc1d-48f5-81b0-611de15c77fd",
+              "name": "body",
+              "value": "`{{ $json.body",
+              "type": "string"
+            },
+            {
+              "id": "18dd9133-4de1-48b1-a939-3d43a41bedc0",
+              "name": "category",
+              "value": "={{ $json.category }}",
+              "type": "string"
+            },
+            {
+              "id": "494bb70a-9b54-4a51-a1c8-d77b7e191700",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        6240
+      ],
+      "id": "63248d1f-295d-40e0-acac-9dd2d4831443",
+      "name": "Prepare LLM Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a STRICT email classification engine.  ROLE & RULES: - Analyze BOTH the email subject AND body content to classify the email. - Output ONLY a single valid JSON object — nothing else. - No explanations, no markdown, no extra text before/after the JSON. - Do NOT make up information not present in the subject or body. - Do NOT guess dates/times — only extract when explicitly stated.  OUTPUT SCHEMA (you MUST follow this structure exactly): {   \"category\": \"Work & Professional\" | \"Payments & Banking\" | \"Bills & Subscriptions\" | \"Shopping & Orders\" | \"Travel & Tickets\" | \"Security & Login\" | \"Notifications\" | \"Marketing\" | \"Other\",   \"priority\": \"P1\" | \"P2\" | \"P3\",   \"notification_required\": true | false,   \"summary\": string,   \"action\": string,   \"event_time\": string | null,   \"message_id\": string,   \"thread_id\": string }  CATEGORY RULES (choose exactly one): - \"Work & Professional\" → job applications, interviews, meetings, tasks, colleagues, HR, workplace - \"Payments & Banking\" → bank alerts, UPI, transactions, debits, credits, card usage, account statements, refunds - \"Bills & Subscriptions\" → utility bills, phone, internet, Netflix, Spotify, renewals, due dates - \"Shopping & Orders\" → Flipkart/Amazon orders, delivery updates, invoices, returns, tracking - \"Travel & Tickets\" → flight/train/bus/hotel bookings, boarding passes, cancellations - \"Security & Login\" → OTP, password reset, login attempt, suspicious activity, 2FA - \"Notifications\" → service updates, account changes, reminders (non-marketing) - \"Marketing\" → offers, discounts, sales, newsletters, promotions - \"Other\" → anything that doesn't clearly fit above  PRIORITY RULES: - P1 (high) → urgent: security alerts, payment failures, due today, suspicious login, deadlines, action required immediately → notification_required = true - P2 (medium) → important but not urgent: confirmations, reminders, upcoming events, statements → notification_required = true - P3 (low) → promotions, newsletters, general info, ads → notification_required = false - If unsure between P1 and P2 → choose P2  EVENT TIME RULES: - Set event_time ONLY if a specific date AND time is clearly written in subject or body - Format: ISO 8601 with timezone (example: \"2025-03-15T18:30:00+05:30\") - Otherwise: null - Never invent or assume dates/times  SUMMARY RULES: - One short, clear sentence (max 15 words) - What the email is actually about  ACTION RULES: - Specific next step the user should take (e.g. \"Verify the transaction in your bank app\") - If no action needed → \"No action required\"  ID RULES: - Copy the exact values provided for message_id and thread_id into the output — do not change them"
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Classify this email using both subject and body.\n\nEmail Subject: {{ $json.subject }}\nEmail Body: {{ $json.body }}\nMessage ID: {{ $json.messageId }}\nThread ID: {{ $json.threadId }}\n\nReturn ONLY the JSON object — no other text."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        928,
+        6240
+      ],
+      "id": "400d8477-8e03-4741-b8bd-9b90576d9b44",
+      "name": "LLM Classification Chain"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text;\n\nreturn [\n  {\n    json: JSON.parse(raw)\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        6240
+      ],
+      "id": "07003637-9c27-43ae-ac5d-28adbdcaee8d",
+      "name": "Parse LLM Output to JSON"
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        6240
+      ],
+      "id": "a2e351bf-e0ce-4566-b064-aeb3d1bfae15",
+      "name": "Fetch Existing Gmail Labels",
+      "webhookId": "1dadf220-4002-4709-a52f-e42049f559d7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1712,
+        6448
+      ],
+      "id": "0be2ef49-7203-4638-95b0-6aabd37086c9",
+      "name": "Merge Email + Label Metadata"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst first = items[0].json;\n\nconst {\n  category,\n  priority,\n  notification_required,\n  summary,\n  action,\n  event_time,\n  message_id,\n  thread_id\n} = first;\n\n// 🔒 SINGLE SOURCE OF TRUTH\nconst PRIORITY_LABEL_MAP = {\n  P1: \"🔥 P1\",\n  P2: \"⚠️ P2\",\n  P3: \"ℹ️ P3\"\n};\n\nconst labelNameToCheck = PRIORITY_LABEL_MAP[priority];\n\n// Find matching Gmail label by NAME\nconst matchedLabel = items.find(\n  item => item.json.name === labelNameToCheck\n);\n\nreturn [\n  {\n    json: {\n      category,\n      priority,\n      notification_required,\n      summary,\n      action,\n      event_time,\n      message_id,\n      thread_id,\n      label_apply: matchedLabel ? matchedLabel.json.id : null,\n      label_exists: !!matchedLabel\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        6448
+      ],
+      "id": "78fb90c6-9442-47a8-a9aa-f658cde55c65",
+      "name": "Post-Processing – Classification Logic"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "P1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a921fa43-c6d1-4fb1-9cd6-0003a38dafc0"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "49ef3229-457b-43d4-a4fc-1b33ba7e0418",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "P2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        7024
+      ],
+      "id": "92cba536-6464-450d-a607-67f1af45078c",
+      "name": "Priority Classification Router1"
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "operation": "create",
+        "name": "=P1 🔥",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        6832
+      ],
+      "id": "fa706897-f8a1-433c-9b9d-6996acd98614",
+      "name": "Create P1 🔥 lable",
+      "webhookId": "ca88fedd-f5d9-4a4e-9488-4147f0d75f25",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $node[\"Prepare LLM Input\"].json.messageId }}",
+        "labelIds": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        6832
+      ],
+      "id": "6f5a350c-236e-4f3e-9af7-3426f6365dc3",
+      "name": "Add New P1 🔥 lable",
+      "webhookId": "2925f341-f766-438c-9868-1aa23ff28c92",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "={{ $json.priorityLabelId }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        6656
+      ],
+      "id": "2d5647a6-97d5-452b-96c5-6deea3f9ef4b",
+      "name": "Add P1 🔥 lable",
+      "webhookId": "067afad0-95c4-41ad-9388-2bf3c57e39e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.message_id }}",
+        "labelIds": "={{ $json.label_apply }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        7072
+      ],
+      "id": "67ce2492-a283-47a5-b239-5a48adaa3fc4",
+      "name": "Add to ⚠️ P2 lable",
+      "webhookId": "067afad0-95c4-41ad-9388-2bf3c57e39e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "operation": "create",
+        "name": "=⚠️ P2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        7328
+      ],
+      "id": "56a3eb46-6eb6-4af7-a700-004b5db0b393",
+      "name": "Create⚠️ P2 lable",
+      "webhookId": "ca88fedd-f5d9-4a4e-9488-4147f0d75f25",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $node[\"Prepare LLM Input\"].json.messageId }}",
+        "labelIds": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        7328
+      ],
+      "id": "231da42e-8d4d-407f-9737-ccb5b699f625",
+      "name": "Add to  ⚠️ P2 lable",
+      "webhookId": "2925f341-f766-438c-9868-1aa23ff28c92",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9ffddd4-2c7c-48f0-ae12-74e96abd3090",
+              "name": "labelName",
+              "value": "={{ $json.category.toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "b31513fb-3abf-4918-bc53-48c2020784e8",
+              "name": "label_exists",
+              "value": "={{ $json.label_exists }}",
+              "type": "string"
+            },
+            {
+              "id": "1f0c1b94-9b85-4682-9050-d9c9367b7672",
+              "name": "lable_name",
+              "value": "={{ $json.label_apply }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        7776
+      ],
+      "id": "fac157de-2314-4e69-8d12-4114eac5f06c",
+      "name": "Fallback Field Mapping"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dd2e8aa9-0416-467b-a9d6-c11a8bdb6e07",
+              "leftValue": "={{ $json.label_exists }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        7776
+      ],
+      "id": "34db880b-87e0-4c87-9b49-744d39937683",
+      "name": "Generic Label Exists?"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $node[\"Prepare LLM Input\"].json.messageId }}",
+        "labelIds": "={{ $json.id }}\n\n"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        7680
+      ],
+      "id": "892acbca-1df1-41fc-b872-26d2191ff9ac",
+      "name": "Add Existing Generic Label",
+      "webhookId": "067afad0-95c4-41ad-9388-2bf3c57e39e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "operation": "create",
+        "name": "={{ $json.labelName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        7872
+      ],
+      "id": "88533ba1-2295-45fa-a8e1-8f8963333e38",
+      "name": "Create Generic Label",
+      "webhookId": "ca88fedd-f5d9-4a4e-9488-4147f0d75f25",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $node[\"Prepare LLM Input\"].json.messageId }}",
+        "labelIds": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        7872
+      ],
+      "id": "a91378ec-d79f-44b1-ab4e-d9ffb7f8762d",
+      "name": "Add To Created  Generic Label",
+      "webhookId": "2925f341-f766-438c-9868-1aa23ff28c92",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Ae0RSDyOONgdZIcH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3e71456c-8c55-4ffe-a6ae-c88a7d440db9",
+              "leftValue": "={{ $json.notification_required }}",
+              "rightValue": "True",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        160,
+        7552
+      ],
+      "id": "cde38a75-e8b0-4681-9516-c2956fda6d83",
+      "name": "Checking notificton required or not"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "P1 Exists?2": {
+      "main": [
+        [
+          {
+            "node": "Add P1 🔥 lable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create P1 🔥 lable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P2 Exists?2": {
+      "main": [
+        [
+          {
+            "node": "Add to ⚠️ P2 lable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create⚠️ P2 lable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM Classification Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Email Listener": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare LLM Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare LLM Input": {
+      "main": [
+        [
+          {
+            "node": "LLM Classification Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Classification Chain": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Output to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Output to JSON": {
+      "main": [
+        [
+          {
+            "node": "Fetch Existing Gmail Labels",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Email + Label Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Existing Gmail Labels": {
+      "main": [
+        [
+          {
+            "node": "Merge Email + Label Metadata",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Email + Label Metadata": {
+      "main": [
+        [
+          {
+            "node": "Post-Processing – Classification Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Processing – Classification Logic": {
+      "main": [
+        [
+          {
+            "node": "Checking notificton required or not",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Priority Classification Router1": {
+      "main": [
+        [
+          {
+            "node": "P1 Exists?2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P2 Exists?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create P1 🔥 lable": {
+      "main": [
+        [
+          {
+            "node": "Add New P1 🔥 lable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add New P1 🔥 lable": {
+      "main": [
+        []
+      ]
+    },
+    "Create⚠️ P2 lable": {
+      "main": [
+        [
+          {
+            "node": "Add to  ⚠️ P2 lable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Field Mapping": {
+      "main": [
+        [
+          {
+            "node": "Generic Label Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generic Label Exists?": {
+      "main": [
+        [
+          {
+            "node": "Add Existing Generic Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Generic Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Generic Label": {
+      "main": [
+        [
+          {
+            "node": "Add To Created  Generic Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checking notificton required or not": {
+      "main": [
+        [
+          {
+            "node": "Priority Classification Router1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Field Mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d75e0833-c667-4c6d-b0c8-0fffb15c497a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3f4545e1c26cb8da154060ba36a7966196080daad9da02b7c3ee3af7d7cc489d"
+  },
+  "id": "eDLHbRfZsiKOPyIicbu3G",
+  "tags": []
+}
